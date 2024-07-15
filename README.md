@@ -60,7 +60,7 @@ Follow these steps to install and run the application on your local machine:
     ```
 
 6. **Open the web interface:**
-    Open your web browser and go to `http://127.0.0.1:3338/`, or the http://<deviceIp>:3338/.
+    Open your web browser and go to `http://127.0.0.1:3338/`, or the http://{deviceIp}:3338/.
 
 ## Usage
 
@@ -91,7 +91,7 @@ Each time a shot is detected, the reaction time is logged in `shot_log.txt` in t
 
 ## Authors
 
-This application was developed by [your name or team name].
+This application was developed by mvleest-code.
 
 ## License
 
