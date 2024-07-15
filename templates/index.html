@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dryfire Training</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .title {
+            margin-top: 20px;
+            font-size: 2rem;
+        }
+        .timer, .stats {
+            margin-top: 20px;
+            font-size: 1.5rem;
+        }
+        .target {
+            position: absolute;
+            cursor: pointer;
+        }
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div class="title">Dryfire Training</div>
+    <div class="timer" id="timer">Next target in: 10s</div>
+    <div class="container" id="targetContainer"></div>
+    <div class="stats" id="stats"></div>
+
+    <script>
+        const timerElement = document.getElementById('timer');
+        const targetContainer = document.getElementById('targetContainer');
+        const statsElement = document.getElementById('stats');
+        let currentTarget = null;
+        let countdown = 10;
+        let shotTime = null;
+
+        function updateTimer() {
+            timerElement.textContent = `Next target in: ${countdown}s`;
+            if (countdown === 0) {
+                createTarget();
+                countdown = 10;  // Reset countdown after showing the target
+            } else {
+                countdown--;
+            }
+        }
+
+        function createTarget() {
+            if (currentTarget) {
+                currentTarget.remove();
+            }
+
+            currentTarget = document.createElement('div');
+            currentTarget.classList.add('target');
+            currentTarget.style.top = `${Math.random() * 90}vh`;
+            currentTarget.style.left = `${Math.random() * 90}vw`;
+            currentTarget.style.backgroundImage = 'url(/static/target.png)';
+            currentTarget.style.backgroundSize = 'cover';
+            currentTarget.style.width = '100px';
+            currentTarget.style.height = '100px';
+
+            currentTarget.addEventListener('click', () => {
+                currentTarget.remove();
+                currentTarget = null;
+            });
+
+            targetContainer.appendChild(currentTarget);
+            shotTime = Date.now();  // Note the time when the target appears
+
+            setTimeout(() => {
+                if (currentTarget) {
+                    currentTarget.remove();
+                    currentTarget = null;
+                }
+            }, 5000);  // Target blijft nu 5 seconden staan
+        }
+
+        function fetchStats() {
+            fetch('/get_stats')
+                .then(response => response.json())
+                .then(data => {
+                    statsElement.innerHTML = `
+                        <p>Fastest reaction time: ${data.min_time.toFixed(2)}s</p>
+                        <p>Slowest reaction time: ${data.max_time.toFixed(2)}s</p>
+                        <p>Average reaction time: ${data.average_time.toFixed(2)}s</p>
+                        <p>Total shots: ${data.shot_count}</p>
+                    `;
+                });
+        }
+
+        setInterval(updateTimer, 1000);  // Update de timer elke seconde
+        setInterval(fetchStats, 1000);  // Fetch stats every second
+    </script>
+</body>
+</html>
