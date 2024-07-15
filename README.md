@@ -91,7 +91,7 @@ Each time a shot is detected, the reaction time is logged in `shot_log.txt` in t
 
 ## Authors
 
-This application was developed by [your name or team name].
+This application was developed by mvleest-code.
 
 ## License
 
