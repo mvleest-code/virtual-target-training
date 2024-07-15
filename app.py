@@ -75,4 +75,4 @@ def get_stats():
 if __name__ == '__main__':
     listener_thread = threading.Thread(target=listen_for_shots, daemon=True)
     listener_thread.start()
-    app.run(debug=True)
+    app.run(host="0.0.0.0",port=3338, debug=True)
