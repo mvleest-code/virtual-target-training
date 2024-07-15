@@ -24,6 +24,8 @@ wheelhouse/
 dist/
 build/
 *.whl
+/templates/.lh
+/static/.lh
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -94,6 +96,8 @@ celerybeat-schedule
 .direnv
 .virtualenv
 .history
+.lh 
+
 
 # Spyder project settings
 .spyderproject
