@@ -3,7 +3,6 @@ import threading
 import time
 import pyaudio
 import numpy as np
-from scipy.signal import find_peaks
 
 app = Flask(__name__)
 
@@ -12,25 +11,30 @@ FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
 CHUNK = 1024
-THRESHOLD = 1000
+THRESHOLD_DB = 115  # Approximate threshold for detecting sounds above 115 dB
 
-# Variables to track shot times
+# Variables to track shot times and detection flag
 shot_times = []
 min_time = float('inf')
 max_time = 0
 total_time = 0
 shot_count = 0
+shot_detected = False
 
 # Lock for thread safety
 lock = threading.Lock()
 
 def detect_shot(audio_data):
-    samples = np.frombuffer(audio_data, dtype=np.int16)
-    peaks, _ = find_peaks(np.abs(samples), height=THRESHOLD)
-    return len(peaks) > 0
+    samples = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32)
+    rms = np.sqrt(np.mean(samples**2))
+    db = 20 * np.log10(rms) if rms > 0 else -np.inf
+    
+    if db > THRESHOLD_DB:
+        return True
+    return False
 
 def listen_for_shots():
-    global shot_times, min_time, max_time, total_time, shot_count
+    global shot_times, min_time, max_time, total_time, shot_count, shot_detected
     p = pyaudio.PyAudio()
     stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
     
@@ -46,6 +50,7 @@ def listen_for_shots():
                     total_time += reaction_time
                     min_time = min(min_time, reaction_time)
                     max_time = max(max_time, reaction_time)
+                    shot_detected = True
                     with open("shot_log.txt", "a") as log_file:
                         log_file.write(f"Shot {shot_count}: {reaction_time:.2f}s\n")
                     print(f"Shot detected! Reaction time: {reaction_time:.2f}s")
@@ -72,7 +77,15 @@ def get_stats():
             "shot_count": shot_count
         })
 
+@app.route('/shot_detected')
+def shot_detected_endpoint():
+    global shot_detected
+    with lock:
+        detected = shot_detected
+        shot_detected = False
+        return jsonify({"shot_detected": detected})
+
 if __name__ == '__main__':
     listener_thread = threading.Thread(target=listen_for_shots, daemon=True)
     listener_thread.start()
-    app.run(host="0.0.0.0",port=3338, debug=True)
+    app.run(host="0.0.0.0",port=3338,debug=True)

@@ -15,6 +15,7 @@
             color: #ffffff;
             margin: 0;
             font-family: Arial, sans-serif;
+            position: relative;
         }
         .title {
             margin-top: 20px;
@@ -34,6 +35,16 @@
             height: 100%;
             overflow: hidden;
         }
+        .overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -41,14 +52,16 @@
     <div class="timer" id="timer">Next target in: 10s</div>
     <div class="container" id="targetContainer"></div>
     <div class="stats" id="stats"></div>
+    <div class="overlay" id="overlay">Shot Detected!</div>
 
     <script>
         const timerElement = document.getElementById('timer');
         const targetContainer = document.getElementById('targetContainer');
+        const overlay = document.getElementById('overlay');
         const statsElement = document.getElementById('stats');
         let currentTarget = null;
         let countdown = 10;
-        let shotTime = null;
+        let targetSize = 100; // Size of the target in pixels
 
         function updateTimer() {
             timerElement.textContent = `Next target in: ${countdown}s`;
@@ -67,12 +80,19 @@
 
             currentTarget = document.createElement('div');
             currentTarget.classList.add('target');
-            currentTarget.style.top = `${Math.random() * 90}vh`;
-            currentTarget.style.left = `${Math.random() * 90}vw`;
             currentTarget.style.backgroundImage = 'url(/static/target.png)';
             currentTarget.style.backgroundSize = 'cover';
-            currentTarget.style.width = '100px';
-            currentTarget.style.height = '100px';
+            currentTarget.style.width = `${targetSize}px`;
+            currentTarget.style.height = `${targetSize}px`;
+
+            // Ensure the target is fully visible within the viewport
+            const maxWidth = window.innerWidth - targetSize;
+            const maxHeight = window.innerHeight - targetSize;
+            const top = Math.random() * maxHeight;
+            const left = Math.random() * maxWidth;
+
+            currentTarget.style.top = `${top}px`;
+            currentTarget.style.left = `${left}px`;
 
             currentTarget.addEventListener('click', () => {
                 currentTarget.remove();
@@ -80,14 +100,13 @@
             });
 
             targetContainer.appendChild(currentTarget);
-            shotTime = Date.now();  // Note the time when the target appears
 
             setTimeout(() => {
                 if (currentTarget) {
                     currentTarget.remove();
                     currentTarget = null;
                 }
-            }, 5000);  // Target blijft nu 5 seconden staan
+            }, 5000);  // Target remains for 5 seconds
         }
 
         function fetchStats() {
@@ -103,8 +122,26 @@
                 });
         }
 
-        setInterval(updateTimer, 1000);  // Update de timer elke seconde
+        function checkShotDetected() {
+            fetch('/shot_detected')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.shot_detected) {
+                        showOverlay();
+                    }
+                });
+        }
+
+        function showOverlay() {
+            overlay.style.display = 'block';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 2000);  // Overlay remains visible for 2 seconds
+        }
+
+        setInterval(updateTimer, 1000);  // Update the timer every second
         setInterval(fetchStats, 1000);  // Fetch stats every second
+        setInterval(checkShotDetected, 1000);  // Check for shot detection every second
     </script>
 </body>
 </html>
